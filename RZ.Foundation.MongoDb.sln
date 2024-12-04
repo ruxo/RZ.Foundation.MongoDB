@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A44D0E35-A19E-47DC-9CB5-40A56202602C}"
+	ProjectSection(SolutionItems) = preProject
+		src\CommonGlobalUsings.cs = src\CommonGlobalUsings.cs
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7E6F7F99-5011-4766-BA02-E0B76CE20BAC}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RZ.Foundation.MongoDb", "src\RZ.Foundation.MongoDb\RZ.Foundation.MongoDb.csproj", "{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RZ.Foundation.MongoDb.Migration", "src\RZ.Foundation.MongoDb.Migration\RZ.Foundation.MongoDb.Migration.csproj", "{2CE1175A-CC29-48F1-A480-9A6A63AEA469}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{40B3F1C6-FDAA-4760-BE9F-1638A0DC9822}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Directory.Build.props = tests\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RZ.Foundation.MongoDbTest", "tests\RZ.Foundation.MongoDbTest\RZ.Foundation.MongoDbTest.fsproj", "{0CAC52FC-0212-446B-A7D9-8BC045766B01}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E22BFA34-42A6-4A5B-B53D-482CCBF1C973} = {A44D0E35-A19E-47DC-9CB5-40A56202602C}
+		{2CE1175A-CC29-48F1-A480-9A6A63AEA469} = {A44D0E35-A19E-47DC-9CB5-40A56202602C}
+		{0CAC52FC-0212-446B-A7D9-8BC045766B01} = {40B3F1C6-FDAA-4760-BE9F-1638A0DC9822}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CE1175A-CC29-48F1-A480-9A6A63AEA469}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CE1175A-CC29-48F1-A480-9A6A63AEA469}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CE1175A-CC29-48F1-A480-9A6A63AEA469}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CE1175A-CC29-48F1-A480-9A6A63AEA469}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CAC52FC-0212-446B-A7D9-8BC045766B01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CAC52FC-0212-446B-A7D9-8BC045766B01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CAC52FC-0212-446B-A7D9-8BC045766B01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CAC52FC-0212-446B-A7D9-8BC045766B01}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
