@@ -11,17 +11,22 @@ public static class AppSettings
     const string EnvDatabaseName = "CS_DATABASE";
     const string EnvFileConfig = "CS_CONFIGFILE";
 
-    public static ConnectionSettings FromEnvironment() {
-        var connection = GetEnv(EnvConnectionString);
+    public static ConnectionSettings FromEnvironment(string? connectionString) {
+        var connection = connectionString ?? GetEnv(EnvConnectionString);
         var dbName = GetEnv(EnvDatabaseName);
-        var settings = from c in connection
-                       from db in dbName
-                       select new ConnectionSettings(c, db);
-        var final = settings.OrElse(() => GetEnv(EnvFileConfig).Map(GetFromFile));
-        return final
-           .GetOrThrow(() => new ErrorInfoException(StandardErrorCodes.MissingConfiguration,
-                                                    $"No connection settings in {EnvConnectionString}, {EnvDatabaseName}, or" +
-                                                    $" {EnvFileConfig}"));
+
+        ConnectionSettings? settings = connection is not null && dbName is not null? new ConnectionSettings(connection, dbName) : null;
+        var final = settings ?? GetEnv(EnvFileConfig)?.Apply(GetFromFile);
+
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Production")
+            Console.WriteLine($"Configured Connection: [{connection}]");
+
+        return final ?? throw new ErrorInfoException(StandardErrorCodes.MissingConfiguration, GetErrorMessage());
+
+        string GetErrorMessage()
+            => connectionString is null
+                   ? $"No connection settings in {EnvConnectionString}, {EnvDatabaseName}, or {EnvFileConfig}"
+                   : $"No database name in {EnvDatabaseName} or {EnvFileConfig}";
     }
 
     public static ConnectionSettings? From(MongoConnectionString connectionString) {
@@ -32,5 +37,6 @@ public static class AppSettings
     static ConnectionSettings GetFromFile(string filename) =>
         JsonSerializer.Deserialize<ConnectionSettings>(File.ReadAllText(filename));
 
-    static Option<string> GetEnv(string key) => Optional(Environment.GetEnvironmentVariable(key));
+    static string? GetEnv(string key)
+        => Environment.GetEnvironmentVariable(key);
 }

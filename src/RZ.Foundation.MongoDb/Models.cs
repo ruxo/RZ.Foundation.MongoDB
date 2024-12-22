@@ -3,6 +3,10 @@ using JetBrains.Annotations;
 
 namespace RZ.Foundation.MongoDb;
 
+/// <summary>
+/// Explicit collection name for MongoDB
+/// </summary>
+/// <param name="name">Name of collection</param>
 [AttributeUsage(AttributeTargets.Class), PublicAPI]
 public class CollectionNameAttribute(string name) : Attribute
 {

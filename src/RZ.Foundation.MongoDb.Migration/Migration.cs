@@ -98,21 +98,11 @@ public static class Migration
         public void Run(IClientSessionHandle session) {
             if (validation is not null)
                 database.CreateCollection<T>(session, validation, dbName);
+            else
+                database.CreateCollection(session, dbName);
+
             if (indexModels.Count != 0)
                 database.Collection<T>().Indexes.CreateMany(session, indexModels);
-        }
-
-        public void Run() {
-            using var session = database.Client.StartSession();
-            // if the using MongoDB doesn't support transaction, ignore it.
-            var transactionSupported = TryCatch(() => {
-                    session.StartTransaction();
-                    return Unit.Default;
-                })
-               .ToOption();
-            Run(session);
-            if (transactionSupported.IsSome)
-                session.CommitTransaction();
         }
     }
 
