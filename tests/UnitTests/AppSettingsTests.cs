@@ -27,11 +27,21 @@ public class AppSettingsTests
     }
 
     [Fact(DisplayName = "Get ConnectionSettings from environment where nothing is set, will throw exception")]
-    public  void GetFromEnvironment() {
+    public void GetFromEnvironment() {
         var action = () => AppSettings.FromEnvironment(null);
 
         // then
         var error = action.Should().Throw<ErrorInfoException>();
         error.Which.Code.Should().Be(StandardErrorCodes.MissingConfiguration);
+    }
+
+    [Fact(DisplayName = "Get database from connection string")]
+    public void GetDatabaseFromConnection() {
+        const string FullConnectionString = "mongodb+srv://user:password@mongo.net/?retryWrites=true&w=majority&appName=AppTest&database=dbname";
+        var mcs = MongoConnectionString.From(FullConnectionString);
+        var cs = AppSettings.From(mcs!.Value);
+
+        // then
+        cs.Should().Be(new ConnectionSettings("mongodb+srv://user:password@mongo.net?appName=AppTest&retryWrites=true&w=majority", "dbname"));
     }
 }

@@ -18,7 +18,7 @@ public static class AppSettings
         ConnectionSettings? settings = connection is not null && dbName is not null? new ConnectionSettings(connection, dbName) : null;
         var final = settings ?? GetEnv(EnvFileConfig)?.Apply(GetFromFile);
 
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Production")
+        if (final is null)
             Console.WriteLine($"Configured Connection: [{connection}]");
 
         return final ?? throw new ErrorInfoException(StandardErrorCodes.MissingConfiguration, GetErrorMessage());
