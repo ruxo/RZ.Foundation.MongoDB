@@ -17,7 +17,7 @@ type ``Mongo transaction tests`` (output: ITestOutputHelper) =
         use mdb = startTransactDb output
 
         let addCustomer() = task {
-            use transaction = mdb.Db.CreateTransaction()
+            let transaction = mdb.Db.CreateTransaction()
 
             let customer = transaction.GetCollection<Customer>()
 
@@ -25,6 +25,7 @@ type ``Mongo transaction tests`` (output: ITestOutputHelper) =
             let! _ = customer.Add(JohnDoe)
             let! _ = customer.Add(JaneDoe)
             do! transaction.Commit()
+            do! transaction.DisposeAsync()
         }
         // when
         do! addCustomer()
@@ -39,13 +40,14 @@ type ``Mongo transaction tests`` (output: ITestOutputHelper) =
         use mdb = startTransactDb output
 
         let addCustomer() = task {
-            use transaction = mdb.Db.CreateTransaction()
+            let transaction = mdb.Db.CreateTransaction()
 
             let customer = transaction.GetCollection<Customer>()
 
             // when
             let! _ = customer.Add(JohnDoe)
             let! _ = customer.Add(JaneDoe)
+            do! transaction.DisposeAsync()
             ()
         }
         // when
