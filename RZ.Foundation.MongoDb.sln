@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		build.ps1 = build.ps1
+		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RZ.Foundation.MongoDb", "src\RZ.Foundation.MongoDb\RZ.Foundation.MongoDb.csproj", "{E22BFA34-42A6-4A5B-B53D-482CCBF1C973}"

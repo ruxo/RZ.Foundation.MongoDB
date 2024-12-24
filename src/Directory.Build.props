@@ -1,10 +1,7 @@
 <Project>
-    <PropertyGroup>
-        <LangVersion>preview</LangVersion>
-    </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
-        <PackageReference Include="MinVer" Version="6.0.0">
+        <PackageReference Include="LanguageExt.Core" />
+        <PackageReference Include="MinVer">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

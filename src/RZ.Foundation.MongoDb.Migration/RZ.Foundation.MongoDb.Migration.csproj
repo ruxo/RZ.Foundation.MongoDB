@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,8 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDBMigrationsRZ" Version="1.4.0" />
-    <PackageReference Include="RZ.AspNet.Bootstrapper" Version="7.0.0-beta.57" />
+    <PackageReference Include="MongoDBMigrationsRZ" />
+    <PackageReference Include="RZ.AspNet.Bootstrapper" />
   </ItemGroup>
 
 </Project>
