@@ -18,11 +18,23 @@ public interface IRzMongoDbContext : IRzMongoDatabase
 }
 
 [PublicAPI]
+public abstract class RzAspireMongoDbContext(IMongoClient client, IMongoDatabase db) : IRzMongoDbContext
+{
+    public IMongoCollection<T> GetCollection<T>()
+        => db.GetCollection<T>(MongoHelper.GetCollectionName<T>());
+
+    public IRzMongoTransaction CreateTransaction() {
+        var session = client.StartSession();
+        session.StartTransaction();
+        return new RzMongoTransaction(Guid.NewGuid(), db, session);
+    }
+}
+
+[PublicAPI]
 public abstract class RzMongoDbContext : IRzMongoDbContext
 {
     readonly Lazy<IMongoClient> client;
     readonly Lazy<IMongoDatabase> db;
-    readonly string databaseName;
 
     protected RzMongoDbContext(string connectionString)
         : this(MongoConnectionString.From(connectionString) ??
@@ -35,9 +47,8 @@ public abstract class RzMongoDbContext : IRzMongoDbContext
 
     protected RzMongoDbContext(MongoConnectionString connection, string dbName)
     {
-        databaseName = dbName;
         client = new(() => new MongoClient(connection.ToString()));
-        db = new(() => client.Value.GetDatabase(databaseName));
+        db = new(() => client.Value.GetDatabase(dbName));
     }
 
     public IMongoCollection<T> GetCollection<T>()
