@@ -9,15 +9,15 @@
 
     <ItemGroup>
         <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-
-        <PackageVersion Include="MinVer" Version="6.0.0" />
+        <!-- Database -->
         <PackageVersion Include="MongoDB.Driver" Version="3.1.0" />
-        <PackageVersion Include="LanguageExt.Core" Version="4.4.9" />
-
         <PackageVersion Include="MongoDBMigrationsRZ" Version="1.4.0" />
+        <!-- Core -->
+        <PackageVersion Include="MinVer" Version="6.0.0" />
+        <PackageVersion Include="LanguageExt.Core" Version="4.4.9" />
         <PackageVersion Include="RZ.Foundation" Version="7.0.0-beta.52" />
         <PackageVersion Include="RZ.AspNet.Bootstrapper" Version="7.0.0-beta.57" />
-
+        <!-- Unit Tests -->
         <PackageVersion Include="coverlet.collector" Version="6.0.2" />
         <PackageVersion Include="FluentAssertions" Version="7.0.0" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />

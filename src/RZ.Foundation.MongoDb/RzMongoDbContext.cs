@@ -18,15 +18,25 @@ public interface IRzMongoDbContext : IRzMongoDatabase
 }
 
 [PublicAPI]
-public abstract class RzAspireMongoDbContext(IMongoClient client, IMongoDatabase db) : IRzMongoDbContext
+public abstract class RzAspireMongoDbContext : IRzMongoDbContext
 {
+    protected IMongoClient Client = null!;
+    protected IMongoDatabase Db = null!;
+
+    protected RzAspireMongoDbContext(IMongoClient client, IMongoDatabase db) {
+        Client = client;
+        Db = db;
+    }
+
+    protected RzAspireMongoDbContext() { }
+
     public IMongoCollection<T> GetCollection<T>()
-        => db.GetCollection<T>(MongoHelper.GetCollectionName<T>());
+        => Db.GetCollection<T>(MongoHelper.GetCollectionName<T>());
 
     public IRzMongoTransaction CreateTransaction() {
-        var session = client.StartSession();
+        var session = Client.StartSession();
         session.StartTransaction();
-        return new RzMongoTransaction(Guid.NewGuid(), db, session);
+        return new RzMongoTransaction(Guid.NewGuid(), Db, session);
     }
 }
 
