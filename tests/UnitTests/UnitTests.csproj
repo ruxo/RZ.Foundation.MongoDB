@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <PackageReference Include="MongoSandbox.Core" />
+      <PackageReference Include="MongoSandbox8.runtime.win-x64" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>

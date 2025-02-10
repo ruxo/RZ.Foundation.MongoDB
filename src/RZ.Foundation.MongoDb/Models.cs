@@ -1,4 +1,5 @@
 ﻿global using VersionType = uint;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 
 namespace RZ.Foundation.MongoDb;
@@ -7,16 +8,16 @@ namespace RZ.Foundation.MongoDb;
 /// Explicit collection name for MongoDB
 /// </summary>
 /// <param name="name">Name of collection</param>
-[AttributeUsage(AttributeTargets.Class), PublicAPI]
+[AttributeUsage(AttributeTargets.Class), PublicAPI, ExcludeFromCodeCoverage]
 public class CollectionNameAttribute(string name) : Attribute
 {
     public string Name { get; } = name;
 }
 
 [PublicAPI]
-public interface IHaveKey<T>
+public interface IHaveKey<out T>
 {
-    T Id { get; set; }
+    T Id { get; }
 }
 
 [PublicAPI]

@@ -1,6 +1,5 @@
 <Project>
     <ItemGroup>
-        <PackageReference Include="LanguageExt.Core" />
         <PackageReference Include="MinVer">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

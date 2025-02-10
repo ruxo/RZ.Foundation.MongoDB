@@ -95,6 +95,11 @@ public static class Migration
             return this;
         }
 
+        public MigrationMongoBuilder<T> IndexCustom(CreateIndexModel<T> index) {
+            indexModels.Add(index);
+            return this;
+        }
+
         public void Run(IClientSessionHandle session) {
             if (validation is not null)
                 database.CreateCollection<T>(session, validation, dbName);
