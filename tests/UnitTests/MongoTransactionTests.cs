@@ -13,12 +13,12 @@ public sealed class MongoTransactionTests
 
         // when
         await using var transaction = mdb.Db.CreateTransaction();
-        await transaction.GetCollection<Customer>().Add(JohnDoe);
-        await transaction.GetCollection<Customer>().Add(JaneDoe);
+        await transaction.GetCollection<Customer>().Add(JohnDoe, cancel: TestContext.Current.CancellationToken);
+        await transaction.GetCollection<Customer>().Add(JaneDoe, cancel: TestContext.Current.CancellationToken);
         await transaction.Commit();
 
         // then
-        var people = await mdb.Db.GetCollection<Customer>().Find(_ => true).ToListAsync();
+        var people = await mdb.Db.GetCollection<Customer>().Find(_ => true).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         people.Should().BeEquivalentTo([ JohnDoe, JaneDoe ]);
     }
 
@@ -30,7 +30,7 @@ public sealed class MongoTransactionTests
         await AddCustomers();
 
         // then
-        var people = await mdb.Db.GetCollection<Customer>().Find(_ => true).ToListAsync();
+        var people = await mdb.Db.GetCollection<Customer>().Find(_ => true).ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
         people.Count.Should().Be(0);
         return;
 

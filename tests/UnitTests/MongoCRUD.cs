@@ -16,10 +16,10 @@ public class Add
 
         // when
         var mdb = MockDb.StartDb();
-        await mdb.Db.GetCollection<Customer>().Add(person);
+        await mdb.Db.GetCollection<Customer>().Add(person, TestContext.Current.CancellationToken);
 
         // then
-        var result = await mdb.Db.GetCollection<Customer>().GetById(person.Id);
+        var result = await mdb.Db.GetCollection<Customer>().GetById(person.Id, TestContext.Current.CancellationToken);
         result.Should().BeEquivalentTo(person);
     }
 
@@ -30,10 +30,10 @@ public class Add
         // when
         var mdb = MockDb.StartDb();
         var coll = mdb.Db.GetCollection<Customer>();
-        await coll.Add(person);
+        await coll.Add(person, TestContext.Current.CancellationToken);
 
         // then when inserting the same record the second time
-        Func<Task> result = () => coll.Add(person);
+        Func<Task> result = () => coll.Add(person, TestContext.Current.CancellationToken);
 
         var exception = await result.Should().ThrowAsync<ErrorInfoException>();
 
@@ -45,7 +45,7 @@ public class Add
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new Customer("Example Name", new("TH", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), new("711CA94D-239C-4E67-81C9-1F2F155B3F43")));
+        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new Customer("Example Name", new("TH", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), new("711CA94D-239C-4E67-81C9-1F2F155B3F43")), TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -57,7 +57,7 @@ public class Add
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new("Testla Namera", new("XY", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), UnusedGuid1));
+        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new("Testla Namera", new("XY", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), UnusedGuid1), TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
@@ -71,7 +71,7 @@ public class Retrieval
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().Get(x => x.Address.Zip == "11111");
+        var result = await mdb.Db.GetCollection<Customer>().Get(x => x.Address.Zip == "11111", TestContext.Current.CancellationToken);
 
         // then
         result.Should().BeEquivalentTo(
@@ -88,7 +88,8 @@ public class Retrieval
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().FindAsync(x => x.Address.Country == "TH").Retrieve(x => x.ToListAsync());
+        var result = await mdb.Db.GetCollection<Customer>().FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
+                              .Retrieve(x => x.ToListAsync());
 
         // then
         result.Count.Should().Be(2);
@@ -110,13 +111,13 @@ public class Update
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var jane = await customer.GetById(JaneDoe.Id);
+        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         var updatedJane = jane! with { Address = jane.Address with { Zip = "22222" } };
-        await customer.Update<Customer, Guid>(updatedJane, clock: time.Object);
+        await customer.Update<Customer, Guid>(updatedJane, clock: time.Object, cancel: TestContext.Current.CancellationToken);
 
         // then
         var expected = updatedJane with { Updated = NewYear2024, Version = 3u };
-        jane = await customer.GetById(JaneDoe.Id);
+        jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         jane.Should().BeEquivalentTo(expected);
     }
 
@@ -130,15 +131,15 @@ public class Update
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var jane = await customer.GetById(JaneDoe.Id);
+        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         var updatedJane = jane! with { Address = jane.Address with { Zip = "22222" } };
-        var result = await customer.TryUpdate<Customer, Guid>(updatedJane, clock: time.Object);
+        var result = await customer.TryUpdate<Customer, Guid>(updatedJane, clock: time.Object, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var expected = updatedJane with { Updated = NewYear2024, Version = 3u };
-        jane = await customer.GetById(JaneDoe.Id);
+        jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         jane.Should().BeEquivalentTo(expected);
     }
 
@@ -150,10 +151,10 @@ public class Update
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        await customer.Update(JaneDoe.Id, updatedJane, JaneDoe.Version);
+        await customer.Update(JaneDoe.Id, updatedJane, JaneDoe.Version, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var jane = await customer.GetById(JaneDoe.Id);
+        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         jane.Should().BeEquivalentTo(updatedJane);
     }
 
@@ -180,7 +181,7 @@ public class Update
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpdate(JaneDoe.Id, updatedJane, 123u);
+        var result = await customer.TryUpdate(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
 
         result.IfFail(out var error, out _).Should().BeTrue();
         error.Code.Should().Be(StandardErrorCodes.RaceCondition);
@@ -221,9 +222,9 @@ public class Update
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJohn = JohnDoe with { Address = JohnDoe.Address with { Zip = "22222" } };
-        await customer.Update(updatedJohn, x => x.Address.Zip == "11111");
+        await customer.Update(updatedJohn, x => x.Address.Zip == "11111", cancel: TestContext.Current.CancellationToken);
 
-        var john = await customer.GetById(JohnDoe.Id);
+        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
         john.Should().BeEquivalentTo(updatedJohn);
     }
 
@@ -246,7 +247,7 @@ public class Update
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
-        var result = await customer.TryUpdate(NewKid, x => x.Address.Country == "TH");
+        var result = await customer.TryUpdate(NewKid, x => x.Address.Country == "TH", cancel: TestContext.Current.CancellationToken);
 
         result.IfFail(out var error, out _).Should().BeTrue();
         error.Code.Should().Be(StandardErrorCodes.DatabaseTransactionError, "someone's ID was overwritten");
@@ -265,12 +266,12 @@ public class Upsert
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var result = await customer.Upsert<Customer, Guid>(NewKid, clock: time.Object);
+        var result = await customer.Upsert<Customer, Guid>(NewKid, clock: time.Object, cancel: TestContext.Current.CancellationToken);
 
         // then
         var expect = NewKid with { Updated = NewYear2024, Version = 2u };
-        var db = await customer.GetById(NewKid.Id);
-        var cursor = await customer.FindAsync(x => x.Address.Country == "US");
+        var db = await customer.GetById(NewKid.Id, cancel: TestContext.Current.CancellationToken);
+        var cursor = await customer.FindAsync(x => x.Address.Country == "US", cancellationToken: TestContext.Current.CancellationToken);
         var allUsPeople = await cursor.Retrieve(x => x.ToListAsync());
         result.Should().BeEquivalentTo(expect);
         db.Should().BeEquivalentTo(expect);
@@ -285,12 +286,13 @@ public class Upsert
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryUpsert<Customer, Guid>(JaneDoe);
+        var result = await customer.TryUpsert<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var allThPeople = await customer.FindAsync(x => x.Address.Country == "TH").Retrieve(x => x.ToListAsync());
+        var allThPeople = await customer.FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
+                                        .Retrieve(x => x.ToListAsync());
         allThPeople.Count.Should().Be(2, "no new record was added");
     }
 
@@ -301,11 +303,11 @@ public class Upsert
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.Upsert(JaneDoe.Id, JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } });
+        var result = await customer.Upsert(JaneDoe.Id, JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } }, cancel: TestContext.Current.CancellationToken);
 
         // then
         var expect = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        var db = await customer.GetById(JaneDoe.Id);
+        var db = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         result.Should().BeEquivalentTo(expect);
         db.Should().BeEquivalentTo(expect);
     }
@@ -334,7 +336,7 @@ public class Upsert
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpsert(JaneDoe.Id, updatedJane, 123u);
+        var result = await customer.TryUpsert(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -349,9 +351,9 @@ public class Upsert
 
         // when
         var updatedJohn = JohnDoe with { Address = JohnDoe.Address with { Zip = "22222" } };
-        var result = await customer.Upsert(updatedJohn, x => x.Address.Zip == "11111");
+        var result = await customer.Upsert(updatedJohn, x => x.Address.Zip == "11111", cancel: TestContext.Current.CancellationToken);
 
-        var john = await customer.GetById(JohnDoe.Id);
+        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
         john.Should().BeEquivalentTo(updatedJohn);
         result.Should().BeEquivalentTo(updatedJohn);
     }
@@ -364,7 +366,7 @@ public class Upsert
 
         // when
         var updatedJohn = JohnDoe with { Address = JohnDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpsert(updatedJohn, x => x.Address.Zip == "99999");
+        var result = await customer.TryUpsert(updatedJohn, x => x.Address.Zip == "99999", cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -381,10 +383,10 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        await customer.DeleteAll(_ => true);
+        await customer.DeleteAll(_ => true, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var people = await customer.FindAsync(_ => true).Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
         people.Count.Should().Be(0);
     }
 
@@ -395,10 +397,10 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        await customer.Delete<Customer, Guid>(JaneDoe);
+        await customer.Delete<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var jane = await customer.GetById(JaneDoe.Id);
+        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         jane.Should().BeNull();
     }
 
@@ -409,10 +411,10 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        await customer.Delete(x => x.Address.Zip == UniqueZip);
+        await customer.Delete(x => x.Address.Zip == UniqueZip, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var john = await customer.GetById(JohnDoe.Id);
+        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
         john.Should().BeNull();
     }
 
@@ -423,10 +425,10 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        await customer.Delete(JohnDoe.Id);
+        await customer.Delete(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var john = await customer.GetById(JohnDoe.Id);
+        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
         john.Should().BeNull();
     }
 
@@ -435,13 +437,13 @@ public class Deletion
     {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
-        var customerCount = await customer.CountDocumentsAsync(_ => true);
+        var customerCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
 
         // when
-        await customer.Delete(JohnDoe.Id, 123u);
+        await customer.Delete(JohnDoe.Id, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var currentCount = await customer.CountDocumentsAsync(_ => true);
+        var currentCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
         currentCount.Should().Be(customerCount);
     }
 
@@ -452,12 +454,12 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDeleteAll(_ => true);
+        var result = await customer.TryDeleteAll(_ => true, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var people = await customer.FindAsync(_ => true).Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
         people.Count.Should().Be(0);
     }
 
@@ -468,12 +470,12 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete<Customer, Guid>(JaneDoe);
+        var result = await customer.TryDelete<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var jane = await customer.GetById(JaneDoe.Id);
+        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
         jane.Should().BeNull();
     }
 
@@ -484,12 +486,12 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete(x => x.Address.Zip == "10000");
+        var result = await customer.TryDelete(x => x.Address.Zip == "10000", cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var people = await customer.FindAsync(x => x.Address.Zip == "10000").Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(x => x.Address.Zip == "10000", cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
         people.Count.Should().Be(1);
     }
 
@@ -500,11 +502,11 @@ public class Deletion
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete(JohnDoe.Id);
+        var result = await customer.TryDelete(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
-        var john = await customer.GetById(JohnDoe.Id);
+        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
         john.Should().BeNull();
     }
 
@@ -513,14 +515,14 @@ public class Deletion
     {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
-        var customerCount = await customer.CountDocumentsAsync(_ => true);
+        var customerCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
 
         // when
-        var result = await customer.TryDelete(JohnDoe.Id, 123u);
+        var result = await customer.TryDelete(JohnDoe.Id, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
-        var currentCount = await customer.CountDocumentsAsync(_ => true);
+        var currentCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
         currentCount.Should().Be(customerCount);
     }
 }
