@@ -1,0 +1,16 @@
+﻿<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="build.ps1" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\RZ.Foundation.MongoDb.Migration\RZ.Foundation.MongoDb.Migration.csproj" Type="Classic C#" />
+    <Project Path="src\RZ.Foundation.MongoDb\RZ.Foundation.MongoDb.csproj" Type="Classic C#" />
+    <File Path="src\CommonGlobalUsings.cs" />
+    <File Path="src\Directory.Build.props" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests\UnitTests\UnitTests.csproj" Type="Classic C#" />
+  </Folder>
+</Solution>

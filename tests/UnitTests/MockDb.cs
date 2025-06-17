@@ -14,9 +14,8 @@ public static class MockDb
 {
     static readonly MongoRunnerOptions MongoOptions = new() {
         UseSingleNodeReplicaSet = true,
-        StandardOuputLogger = s => Trace.WriteLine($"| {s}"),
-        StandardErrorLogger = s => Trace.WriteLine($"ERR: {s}"),
-        KillMongoProcessesWhenCurrentProcessExits = true
+        StandardOutputLogger = s => Trace.WriteLine($"| {s}"),
+        StandardErrorLogger = s => Trace.WriteLine($"ERR: {s}")
     };
     static readonly IMongoRunner Server = StartServer();
 
