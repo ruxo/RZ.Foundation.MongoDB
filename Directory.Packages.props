@@ -1,36 +1,35 @@
 <Project>
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Driver" Version="3.4.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.5.2" />
     <PackageVersion Include="MongoDBMigrationsRZ" Version="1.4.0" />
     <!-- Core -->
     <PackageVersion Include="MinVer" Version="6.0.0" />
-    <PackageVersion Include="RZ.Foundation" Version="7.0.5" />
+    <PackageVersion Include="RZ.Foundation" Version="8.0.0" />
     <!-- Unit Tests -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
-    <PackageVersion Include="FluentAssertions" Version="7.2.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="RZ.Foundation.Testing" Version="7.0.7" />
-    <PackageVersion Include="xunit.analyzers" Version="1.22.0">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="RZ.Foundation.Testing" Version="8.0.0" />
+    <PackageVersion Include="xunit.analyzers" Version="1.26.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.1">
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
     <PackageVersion Include="MongoSandbox.Core" Version="2.0.0" />
     <PackageVersion Include="MongoSandbox8.runtime.win-x64" Version="2.0.0" />
-    <PackageVersion Include="Moq" Version="4.20.72" />
   </ItemGroup>
 </Project>

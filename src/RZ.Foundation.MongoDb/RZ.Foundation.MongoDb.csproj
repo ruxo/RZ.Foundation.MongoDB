@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <Title>RZ's MongoDB Framework</Title>
     <Authors>Ruxo Zheng</Authors>
     <PackageTags>database mongo</PackageTags>
