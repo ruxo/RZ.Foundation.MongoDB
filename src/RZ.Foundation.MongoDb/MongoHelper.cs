@@ -41,7 +41,7 @@ public static class MongoHelper
     public static ErrorInfo InterpretDatabaseError(Exception e)
         => TryInterpretDatabaseError(e) ?? ErrorFrom.Exception(e);
 
-    public static async Task Execute(Func<Task> f) {
+    public static async ValueTask Execute(Func<ValueTask> f) {
         try{
             await f();
         }
@@ -50,7 +50,7 @@ public static class MongoHelper
         }
     }
 
-    public static async Task<T?> ExecuteNullable<T>(Func<Task<T?>> f) {
+    public static async ValueTask<T?> ExecuteNullable<T>(Func<ValueTask<T?>> f) {
         try{
             return await f();
         }
@@ -59,7 +59,7 @@ public static class MongoHelper
         }
     }
 
-    public static async Task<T> Execute<T>(Func<Task<T>> f) {
+    public static async ValueTask<T> Execute<T>(Func<ValueTask<T>> f) {
         try{
             return await f();
         }
@@ -68,7 +68,7 @@ public static class MongoHelper
         }
     }
 
-    public static async Task<Outcome<T>> TryExecute<T>(Func<Task<Outcome<T>>> f) {
+    public static async ValueTask<Outcome<T>> TryExecute<T>(Func<ValueTask<Outcome<T>>> f) {
         try{
             return await f();
         }
@@ -77,7 +77,7 @@ public static class MongoHelper
         }
     }
 
-    public static async Task<Outcome<T>> TryExecute<T>(Func<Task<T>> f) {
+    public static async ValueTask<Outcome<T>> TryExecute<T>(Func<ValueTask<T>> f) {
         try{
             return await f();
         }

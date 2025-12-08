@@ -33,7 +33,7 @@ public class Add
         await coll.Add(person, TestContext.Current.CancellationToken);
 
         // then when inserting the same record the second time
-        Func<Task> result = () => coll.Add(person, TestContext.Current.CancellationToken);
+        Func<Task> result = async () => await coll.Add(person, TestContext.Current.CancellationToken);
 
         var exception = await result.Should().ThrowAsync<ErrorInfoException>();
 
@@ -89,7 +89,7 @@ public class Retrieval
 
         // when
         var result = await mdb.Db.GetCollection<Customer>().FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
-                              .Retrieve(x => x.ToListAsync());
+                              .Retrieve(async x => await x.ToListAsync());
 
         // then
         result.Count.Should().Be(2);
@@ -166,7 +166,7 @@ public class Update
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = () => customer.Update(JaneDoe.Id, updatedJane, 123u);
+        Func<Task> action = async () => await customer.Update(JaneDoe.Id, updatedJane, 123u);
 
         // then
         var error = await action.Should().ThrowAsync<ErrorInfoException>();
@@ -194,7 +194,7 @@ public class Update
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = () => customer.Update(UnusedGuid1, updatedJane);
+        Func<Task> action = async () => await customer.Update(UnusedGuid1, updatedJane);
 
         var error = await action.Should().ThrowAsync<ErrorInfoException>();
 
@@ -208,7 +208,7 @@ public class Update
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = () => customer.Update(JohnDoe.Id, updatedJane);
+        Func<Task> action = async () => await customer.Update(JohnDoe.Id, updatedJane);
 
         var error = await action.Should().ThrowAsync<ErrorInfoException>();
 
@@ -234,7 +234,7 @@ public class Update
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
-        Func<Task> action = () => customer.Update(NewKid, x => x.Address.Country == "TH");
+        Func<Task> action = async () => await customer.Update(NewKid, x => x.Address.Country == "TH");
 
         var error = await action.Should().ThrowAsync<ErrorInfoException>();
 
@@ -272,7 +272,7 @@ public class Upsert
         var expect = NewKid with { Updated = NewYear2024, Version = 2u };
         var db = await customer.GetById(NewKid.Id, cancel: TestContext.Current.CancellationToken);
         var cursor = await customer.FindAsync(x => x.Address.Country == "US", cancellationToken: TestContext.Current.CancellationToken);
-        var allUsPeople = await cursor.Retrieve(x => x.ToListAsync());
+        var allUsPeople = await cursor.Retrieve(async x => await x.ToListAsync());
         result.Should().BeEquivalentTo(expect);
         db.Should().BeEquivalentTo(expect);
         allUsPeople.Count.Should().Be(2);
@@ -292,7 +292,7 @@ public class Upsert
         result.IsSuccess.Should().BeTrue();
 
         var allThPeople = await customer.FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
-                                        .Retrieve(x => x.ToListAsync());
+                                        .Retrieve(async x => await x.ToListAsync());
         allThPeople.Count.Should().Be(2, "no new record was added");
     }
 
@@ -320,7 +320,7 @@ public class Upsert
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = () => customer.Upsert(JaneDoe.Id, updatedJane, 123u);
+        Func<Task> action = async () => await customer.Upsert(JaneDoe.Id, updatedJane, 123u);
 
         // then
         var error = await action.Should().ThrowAsync<ErrorInfoException>();
@@ -386,7 +386,8 @@ public class Deletion
         await customer.DeleteAll(_ => true, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken)
+                                   .Retrieve(async x => await x.ToListAsync());
         people.Count.Should().Be(0);
     }
 
@@ -459,7 +460,8 @@ public class Deletion
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken)
+                                   .Retrieve(async x => await x.ToListAsync());
         people.Count.Should().Be(0);
     }
 
@@ -491,7 +493,8 @@ public class Deletion
         // then
         result.IsSuccess.Should().BeTrue();
 
-        var people = await customer.FindAsync(x => x.Address.Zip == "10000", cancellationToken: TestContext.Current.CancellationToken).Retrieve(_ => _.ToListAsync());
+        var people = await customer.FindAsync(x => x.Address.Zip == "10000", cancellationToken: TestContext.Current.CancellationToken)
+                                   .Retrieve(async x => await x.ToListAsync());
         people.Count.Should().Be(1);
     }
 

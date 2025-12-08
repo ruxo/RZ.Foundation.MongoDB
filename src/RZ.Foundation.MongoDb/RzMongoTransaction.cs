@@ -18,8 +18,8 @@ public interface IRzMongoTransaction : IRzMongoDatabase, IAsyncDisposable
     /// </summary>
     IClientSessionHandle Session { get; }
 
-    Task Commit();
-    Task Rollback();
+    ValueTask Commit();
+    ValueTask Rollback();
 }
 
 [PublicAPI]
@@ -33,14 +33,14 @@ public class RzMongoTransaction(Guid id,IMongoDatabase db, IClientSessionHandle 
     [ExcludeFromCodeCoverage]
     public IClientSessionHandle Session => session;
 
-    public async Task Commit() {
+    public async ValueTask Commit() {
         await session.CommitTransactionAsync();
 
         // no exception trap is needed.. if commit failed, just leave commit = false to abort this transaction
         commit = true;
     }
 
-    public async Task Rollback() {
+    public async ValueTask Rollback() {
         await session.AbortTransactionAsync();
         commit = false;
     }
