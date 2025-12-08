@@ -13,7 +13,7 @@
     <PackageVersion Include="MongoDBMigrationsRZ" Version="1.4.0" />
     <!-- Core -->
     <PackageVersion Include="MinVer" Version="6.0.0" />
-    <PackageVersion Include="RZ.Foundation" Version="8.0.0" />
+    <PackageVersion Include="RZ.Foundation" Version="8.1.0" />
     <!-- Unit Tests -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>

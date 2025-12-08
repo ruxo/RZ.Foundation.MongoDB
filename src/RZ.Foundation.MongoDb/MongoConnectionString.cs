@@ -25,7 +25,7 @@ public readonly record struct MongoConnectionString(
             var authDatabaseStart = (pathStart ?? hostEnd - 1) + 1;
             var authDatabase = connectionString.Substring(authDatabaseStart, (optionStart ?? connectionString.Length) - authDatabaseStart);
             var validOptions = optionStart.Select(i => ExtractOptionString(connectionString[(i + 1)..]))
-                            ?? LanguageExt.Map.empty<CaseInsensitiveString, string>();
+                            ?? Map.empty<CaseInsensitiveString, string>();
             return new MongoConnectionString(scheme, host, string.IsNullOrEmpty(authDatabase) ? null : authDatabase, validOptions);
         });
 
