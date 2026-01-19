@@ -53,6 +53,39 @@ public static class MongoClientExtensions
                 return InterpretDatabaseError(e);
             }
         }
+
+        [PublicAPI]
+        public async ValueTask<Outcome<bool>> TryMoveNext(CancellationToken cancelToken = default) {
+            try{
+                return await cursor.MoveNextAsync(cancelToken);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
+
+        [PublicAPI]
+        public async IAsyncEnumerable<Outcome<T>> Enumerate([EnumeratorCancellation] CancellationToken cancelToken = default) {
+            ErrorInfo? error = null;
+            while(!cancelToken.IsCancellationRequested && Success(await cursor.TryMoveNext(cancelToken), out var cont, out error) && cont)
+                foreach(var item in cursor.Current)
+                    yield return item;
+            if (error is not null)
+                yield return error;
+        }
+    }
+
+    extension<T>(IAsyncCursorSource<T> source)
+    {
+        [PublicAPI]
+        public async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor(CancellationToken cancelToken = default) {
+            try{
+                return SuccessOutcome(await source.ToCursorAsync(cancelToken));
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
     }
 
     [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
