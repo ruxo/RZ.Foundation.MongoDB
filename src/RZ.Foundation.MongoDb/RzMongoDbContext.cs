@@ -48,8 +48,7 @@ public abstract class RzMongoDbContext : IRzMongoDbContext
 
     protected RzMongoDbContext(string connectionString)
         : this(MongoConnectionString.From(connectionString) ??
-               throw new ErrorInfoException(StandardErrorCodes.InvalidRequest, "Database connection string is invalid",
-                                            debugInfo: connectionString)) { }
+               throw new ErrorInfoException(StandardErrorCodes.InvalidRequest, "Database connection string is invalid", debugInfo: connectionString)) { }
 
     protected RzMongoDbContext(MongoConnectionString connection)
         : this(connection.GetValidConnectionString(),

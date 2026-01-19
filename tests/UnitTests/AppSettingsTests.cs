@@ -28,11 +28,11 @@ public class AppSettingsTests
 
     [Fact(DisplayName = "Get ConnectionSettings from environment where nothing is set, will throw exception")]
     public void GetFromEnvironment() {
-        var action = () => AppSettings.FromEnvironment(null);
+        var result = AppSettings.FromEnvironment(null);
 
         // then
-        var error = action.Should().Throw<ErrorInfoException>();
-        error.Which.Code.Should().Be(StandardErrorCodes.MissingConfiguration);
+        result.IsFail.Should().BeTrue();
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.MissingConfiguration);
     }
 
     [Fact(DisplayName = "Get database from connection string")]

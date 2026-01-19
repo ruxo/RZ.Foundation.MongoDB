@@ -20,7 +20,7 @@ public class Add
 
         // then
         var result = await mdb.Db.GetCollection<Customer>().GetById(person.Id, TestContext.Current.CancellationToken);
-        result.Should().BeEquivalentTo(person);
+        result.Unwrap().Should().BeEquivalentTo(person);
     }
 
     [Fact(DisplayName = "Repeatedly add the same single row will throw")]
@@ -33,11 +33,10 @@ public class Add
         await coll.Add(person, TestContext.Current.CancellationToken);
 
         // then when inserting the same record the second time
-        Func<Task> result = async () => await coll.Add(person, TestContext.Current.CancellationToken);
+        var result = await coll.Add(person, TestContext.Current.CancellationToken);
 
-        var exception = await result.Should().ThrowAsync<ErrorInfoException>();
-
-        exception.Which.Code.Should().Be(StandardErrorCodes.Duplication);
+        result.IsFail.Should().BeTrue();
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.Duplication);
     }
 
     [Fact(DisplayName = "Capture duplicated add error with TryAdd")]
@@ -45,7 +44,7 @@ public class Add
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new Customer("Example Name", new("TH", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), new("711CA94D-239C-4E67-81C9-1F2F155B3F43")), TestContext.Current.CancellationToken);
+        var result = await mdb.Db.GetCollection<Customer>().Add(new Customer("Example Name", new("TH", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), new("711CA94D-239C-4E67-81C9-1F2F155B3F43")), TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -57,7 +56,7 @@ public class Add
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().TryAdd(new("Testla Namera", new("XY", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), UnusedGuid1), TestContext.Current.CancellationToken);
+        var result = await mdb.Db.GetCollection<Customer>().Add(new("Testla Namera", new("XY", "10000"), 0, new(2020, 1, 1, 17, 0, 0, TimeSpan.Zero), UnusedGuid1), TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
@@ -74,7 +73,7 @@ public class Retrieval
         var result = await mdb.Db.GetCollection<Customer>().Get(x => x.Address.Zip == "11111", TestContext.Current.CancellationToken);
 
         // then
-        result.Should().BeEquivalentTo(
+        result.Unwrap().Should().BeEquivalentTo(
             new Customer("John Doe",
                          new Address("TH", "11111"),
                          1,
@@ -88,8 +87,9 @@ public class Retrieval
         var mdb = MockDb.StartWithSample();
 
         // when
-        var result = await mdb.Db.GetCollection<Customer>().FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
-                              .Retrieve(async x => await x.ToListAsync());
+        var result = await ThrowIfError(mdb.Db.GetCollection<Customer>()
+                                           .FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
+                                           .Retrieve(x => x.ExecuteList()));
 
         // then
         result.Count.Should().Be(2);
@@ -102,8 +102,7 @@ public class Retrieval
 public class Update
 {
     [Fact(DisplayName = "Update Jane's zip code")]
-    public async Task UpdateJaneZipCode()
-    {
+    public async Task UpdateJaneZipCode() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -111,19 +110,18 @@ public class Update
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        var updatedJane = jane! with { Address = jane.Address with { Zip = "22222" } };
+        var jane = await ThrowIfError(customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken));
+        var updatedJane = jane with { Address = jane.Address with { Zip = "22222" } };
         await customer.Update<Customer, Guid>(updatedJane, clock: time.Object, cancel: TestContext.Current.CancellationToken);
 
         // then
         var expected = updatedJane with { Updated = NewYear2024, Version = 3u };
-        jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
+        jane = await ThrowIfError(customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken));
         jane.Should().BeEquivalentTo(expected);
     }
 
     [Fact(DisplayName = "Try updating Jane Zip code must succeed")]
-    public async Task TryUpdatingJaneZipCodeMustSucceed()
-    {
+    public async Task TryUpdatingJaneZipCodeMustSucceed() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -131,21 +129,20 @@ public class Update
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        var updatedJane = jane! with { Address = jane.Address with { Zip = "22222" } };
-        var result = await customer.TryUpdate<Customer, Guid>(updatedJane, clock: time.Object, cancel: TestContext.Current.CancellationToken);
+        var jane = await ThrowIfError(customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken));
+        var updatedJane = jane with { Address = jane.Address with { Zip = "22222" } };
+        var result = await customer.Update<Customer, Guid>(updatedJane, clock: time.Object, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var expected = updatedJane with { Updated = NewYear2024, Version = 3u };
-        jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
+        jane = await ThrowIfError(customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken));
         jane.Should().BeEquivalentTo(expected);
     }
 
     [Fact(DisplayName = "Update Jane Zip code with explicit version number")]
-    public async Task UpdateJaneZipCodeWithExplicitVersionNumber()
-    {
+    public async Task UpdateJaneZipCodeWithExplicitVersionNumber() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -155,69 +152,62 @@ public class Update
 
         // then
         var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        jane.Should().BeEquivalentTo(updatedJane);
+        jane.Unwrap().Should().BeEquivalentTo(updatedJane);
     }
 
     [Fact(DisplayName = "Update Jane Zip code with outdated explicit version number, results in race condition")]
-    public async Task UpdateJaneZipCodeWithOutdatedExplicitVersionNumberResultsInRaceCondition()
-    {
+    public async Task UpdateJaneZipCodeWithOutdatedExplicitVersionNumberResultsInRaceCondition() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = async () => await customer.Update(JaneDoe.Id, updatedJane, 123u);
+        var result = await customer.Update(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
-        var error = await action.Should().ThrowAsync<ErrorInfoException>();
+        result.IsFail.Should().BeTrue();
+        var error = result.UnwrapError();
 
-        error.Which.Code.Should().Be(StandardErrorCodes.RaceCondition);
+        error.Code.Should().Be(StandardErrorCodes.RaceCondition);
     }
 
     [Fact(DisplayName = "Try updating Jane Zip code with outdated explicit version number, results in race condition")]
-    public async Task TryUpdatingJaneZipCodeWithOutdatedExplicitVersionNumberResultsInRaceCondition()
-    {
+    public async Task TryUpdatingJaneZipCodeWithOutdatedExplicitVersionNumberResultsInRaceCondition() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpdate(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Update(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
 
         result.IfFail(out var error, out _).Should().BeTrue();
         error.Code.Should().Be(StandardErrorCodes.RaceCondition);
     }
 
     [Fact(DisplayName = "Update Jane Zip code with the explicit (new) key and data's key mismatch, results in race condition error")]
-    public async Task UpdateJaneZipCodeWithExplicitNewKeyAndDataKeyMismatchResultsInRaceConditionError()
-    {
+    public async Task UpdateJaneZipCodeWithExplicitNewKeyAndDataKeyMismatchResultsInRaceConditionError() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = async () => await customer.Update(UnusedGuid1, updatedJane);
+        var result = await customer.Update(UnusedGuid1, updatedJane, cancel: TestContext.Current.CancellationToken);
 
-        var error = await action.Should().ThrowAsync<ErrorInfoException>();
-
-        error.Which.Code.Should().Be(StandardErrorCodes.RaceCondition);
+        result.IsFail.Should().BeTrue();
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.RaceCondition);
     }
 
     [Fact(DisplayName = "Update Jane Zip code with the explicit (valid) key and data's key mismatch, results in database transaction error")]
-    public async Task UpdateJaneZipCodeWithExplicitValidKeyAndDataKeyMismatchResultsInDatabaseTransactionError()
-    {
+    public async Task UpdateJaneZipCodeWithExplicitValidKeyAndDataKeyMismatchResultsInDatabaseTransactionError() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = async () => await customer.Update(JohnDoe.Id, updatedJane);
 
-        var error = await action.Should().ThrowAsync<ErrorInfoException>();
-
-        error.Which.Code.Should().Be(StandardErrorCodes.DatabaseTransactionError);
+        var result = await customer.Update(JohnDoe.Id, updatedJane, cancel: TestContext.Current.CancellationToken);
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.DatabaseTransactionError);
     }
 
     [Fact(DisplayName = "Update John zip code with his *unique* zip")]
-    public async Task UpdateJohnZipCodeWithHisUniqueZip()
-    {
+    public async Task UpdateJohnZipCodeWithHisUniqueZip() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -225,29 +215,24 @@ public class Update
         await customer.Update(updatedJohn, x => x.Address.Zip == "11111", cancel: TestContext.Current.CancellationToken);
 
         var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
-        john.Should().BeEquivalentTo(updatedJohn);
+        john.Unwrap().Should().BeEquivalentTo(updatedJohn);
     }
 
     [Fact(DisplayName = "Update with multiple matches will result in ID overwritten which will fail")]
-    public async Task UpdateWithMultipleMatchesWillResultInIDOverwrittenWhichWillFail()
-    {
+    public async Task UpdateWithMultipleMatchesWillResultInIDOverwrittenWhichWillFail() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
-        Func<Task> action = async () => await customer.Update(NewKid, x => x.Address.Country == "TH");
-
-        var error = await action.Should().ThrowAsync<ErrorInfoException>();
-
-        error.Which.Code.Should().Be(StandardErrorCodes.DatabaseTransactionError, "someone's ID was overwritten");
+        var result = await customer.Update(NewKid, x => x.Address.Country == "TH", cancel: TestContext.Current.CancellationToken);
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.DatabaseTransactionError, "someone's ID was overwritten");
     }
 
     [Fact(DisplayName = "Try updating with multiple matches will result in ID overwritten which will fail")]
-    public async Task TryUpdatingWithMultipleMatchesWillResultInIDOverwrittenWhichWillFail()
-    {
+    public async Task TryUpdatingWithMultipleMatchesWillResultInIDOverwrittenWhichWillFail() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
-        var result = await customer.TryUpdate(NewKid, x => x.Address.Country == "TH", cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Update(NewKid, x => x.Address.Country == "TH", cancel: TestContext.Current.CancellationToken);
 
         result.IfFail(out var error, out _).Should().BeTrue();
         error.Code.Should().Be(StandardErrorCodes.DatabaseTransactionError, "someone's ID was overwritten");
@@ -257,8 +242,7 @@ public class Update
 public class Upsert
 {
     [Fact(DisplayName = "Upsert New Kid")]
-    public async Task UpsertNewKid()
-    {
+    public async Task UpsertNewKid() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -266,39 +250,37 @@ public class Upsert
         time.Setup(x => x.GetUtcNow()).Returns(NewYear2024);
 
         // when
-        var result = await customer.Upsert<Customer, Guid>(NewKid, clock: time.Object, cancel: TestContext.Current.CancellationToken);
+        var result = await ThrowIfError(customer.Upsert<Customer, Guid>(NewKid, clock: time.Object, cancel: TestContext.Current.CancellationToken));
 
         // then
         var expect = NewKid with { Updated = NewYear2024, Version = 2u };
         var db = await customer.GetById(NewKid.Id, cancel: TestContext.Current.CancellationToken);
         var cursor = await customer.FindAsync(x => x.Address.Country == "US", cancellationToken: TestContext.Current.CancellationToken);
-        var allUsPeople = await cursor.Retrieve(async x => await x.ToListAsync());
+        var allUsPeople = await ThrowIfError(cursor.Retrieve(async x => await x.ExecuteList()));
         result.Should().BeEquivalentTo(expect);
-        db.Should().BeEquivalentTo(expect);
+        db.Unwrap().Should().BeEquivalentTo(expect);
         allUsPeople.Count.Should().Be(2);
         allUsPeople.Should().Contain(expect);
     }
 
     [Fact(DisplayName = "Try upsert the existing Jane won't have any change and no error")]
-    public async Task TryUpsertTheExistingJaneWontHaveAnyChangeAndNoError()
-    {
+    public async Task TryUpsertTheExistingJaneWontHaveAnyChangeAndNoError() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryUpsert<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Upsert<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var allThPeople = await customer.FindAsync(x => x.Address.Country == "TH", cancellationToken: TestContext.Current.CancellationToken)
-                                        .Retrieve(async x => await x.ToListAsync());
-        allThPeople.Count.Should().Be(2, "no new record was added");
+                                        .Retrieve(async x => await x.ExecuteList());
+        allThPeople.Unwrap().Count.Should().Be(2, "no new record was added");
     }
 
     [Fact(DisplayName = "Upsert Jane Zip code")]
-    public async Task UpsertJaneZipCode()
-    {
+    public async Task UpsertJaneZipCode() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -308,35 +290,32 @@ public class Upsert
         // then
         var expect = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
         var db = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        result.Should().BeEquivalentTo(expect);
-        db.Should().BeEquivalentTo(expect);
+        result.Unwrap().Should().BeEquivalentTo(expect);
+        db.Unwrap().Should().BeEquivalentTo(expect);
     }
 
     [Fact(DisplayName = "Upsert Jane Zip code with outdated explicit version number, results in duplication")]
-    public async Task UpsertJaneZipCodeWithOutdatedExplicitVersionNumberResultsInDuplication()
-    {
+    public async Task UpsertJaneZipCodeWithOutdatedExplicitVersionNumberResultsInDuplication() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        Func<Task> action = async () => await customer.Upsert(JaneDoe.Id, updatedJane, 123u);
+        var result = await customer.Upsert(JaneDoe.Id, updatedJane, 123u);
 
         // then
-        var error = await action.Should().ThrowAsync<ErrorInfoException>();
-
-        error.Which.Code.Should().Be(StandardErrorCodes.Duplication); // note that this is different from Update where it gets Race Condition!
+        result.IsFail.Should().BeTrue();
+        result.UnwrapError().Code.Should().Be(StandardErrorCodes.Duplication); // note that this is different from Update where it gets Race Condition!
     }
 
     [Fact(DisplayName = "Try upsert Jane Zip code with outdated explicit version number, results in duplication")]
-    public async Task TryUpsertJaneZipCodeWithOutdatedExplicitVersionNumberResultsInDuplication()
-    {
+    public async Task TryUpsertJaneZipCodeWithOutdatedExplicitVersionNumberResultsInDuplication() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
         var updatedJane = JaneDoe with { Address = JaneDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpsert(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Upsert(JaneDoe.Id, updatedJane, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -344,8 +323,7 @@ public class Upsert
     }
 
     [Fact(DisplayName = "Upsert John zip code with his unique zip must succeed")]
-    public async Task UpsertJohnZipCodeWithHisUniqueZipMustSucceed()
-    {
+    public async Task UpsertJohnZipCodeWithHisUniqueZipMustSucceed() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -353,20 +331,19 @@ public class Upsert
         var updatedJohn = JohnDoe with { Address = JohnDoe.Address with { Zip = "22222" } };
         var result = await customer.Upsert(updatedJohn, x => x.Address.Zip == "11111", cancel: TestContext.Current.CancellationToken);
 
-        var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
+        var john = await ThrowIfError(customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken));
         john.Should().BeEquivalentTo(updatedJohn);
-        result.Should().BeEquivalentTo(updatedJohn);
+        result.Unwrap().Should().BeEquivalentTo(updatedJohn);
     }
 
     [Fact(DisplayName = "Try upsert John zip code with his invalid zip will fail from inserting a duplicated record")]
-    public async Task TryUpsertJohnZipCodeWithHisInvalidZipWillFailFromInsertingADuplicatedRecord()
-    {
+    public async Task TryUpsertJohnZipCodeWithHisInvalidZipWillFailFromInsertingADuplicatedRecord() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
         var updatedJohn = JohnDoe with { Address = JohnDoe.Address with { Zip = "22222" } };
-        var result = await customer.TryUpsert(updatedJohn, x => x.Address.Zip == "99999", cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Upsert(updatedJohn, x => x.Address.Zip == "99999", cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IfFail(out var error, out _).Should().BeTrue();
@@ -377,8 +354,7 @@ public class Upsert
 public class Deletion
 {
     [Fact(DisplayName = "Delete all customers!")]
-    public async Task DeleteAllCustomers()
-    {
+    public async Task DeleteAllCustomers() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -387,13 +363,12 @@ public class Deletion
 
         // then
         var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken)
-                                   .Retrieve(async x => await x.ToListAsync());
-        people.Count.Should().Be(0);
+                                   .Retrieve(async x => await x.ExecuteList());
+        people.Unwrap().Count.Should().Be(0);
     }
 
     [Fact(DisplayName = "Delete Jane")]
-    public async Task DeleteJane()
-    {
+    public async Task DeleteJane() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -402,12 +377,12 @@ public class Deletion
 
         // then
         var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        jane.Should().BeNull();
+        jane.IsFail.Should().BeTrue();
+        jane.UnwrapError().Code.Should().Be(StandardErrorCodes.NotFound);
     }
 
     [Fact(DisplayName = "Delete with unique zip condition")]
-    public async Task DeleteWithUniqueZipCondition()
-    {
+    public async Task DeleteWithUniqueZipCondition() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -416,12 +391,12 @@ public class Deletion
 
         // then
         var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
-        john.Should().BeNull();
+        john.IsFail.Should().BeTrue();
+        john.UnwrapError().Code.Should().Be(StandardErrorCodes.NotFound);
     }
 
     [Fact(DisplayName = "Delete with a specific key")]
-    public async Task DeleteWithSpecificKey()
-    {
+    public async Task DeleteWithSpecificKey() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
@@ -430,12 +405,12 @@ public class Deletion
 
         // then
         var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
-        john.Should().BeNull();
+        john.IsFail.Should().BeTrue();
+        john.UnwrapError().Code.Should().Be(StandardErrorCodes.NotFound);
     }
 
     [Fact(DisplayName = "Delete with a key and an invalid version, should have no effect")]
-    public async Task DeleteWithKeyAndInvalidVersionShouldHaveNoEffect()
-    {
+    public async Task DeleteWithKeyAndInvalidVersionShouldHaveNoEffect() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
         var customerCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
@@ -449,79 +424,76 @@ public class Deletion
     }
 
     [Fact(DisplayName = "Try deleting all customers!")]
-    public async Task TryDeletingAllCustomers()
-    {
+    public async Task TryDeletingAllCustomers() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDeleteAll(_ => true, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.DeleteAll(_ => true, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var people = await customer.FindAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken)
-                                   .Retrieve(async x => await x.ToListAsync());
-        people.Count.Should().Be(0);
+                                   .Retrieve(async x => await x.ExecuteList());
+        people.Unwrap().Count.Should().Be(0);
     }
 
     [Fact(DisplayName = "Try deleting Jane")]
-    public async Task TryDeletingJane()
-    {
+    public async Task TryDeletingJane() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Delete<Customer, Guid>(JaneDoe, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var jane = await customer.GetById(JaneDoe.Id, cancel: TestContext.Current.CancellationToken);
-        jane.Should().BeNull();
+        jane.IsFail.Should().BeTrue();
+        jane.UnwrapError().Code.Should().Be(StandardErrorCodes.NotFound);
     }
 
     [Fact(DisplayName = "Try deleting with multiple matches, only (random) one is removed")]
-    public async Task TryDeletingWithMultipleMatchesOnlyOneIsRemoved()
-    {
+    public async Task TryDeletingWithMultipleMatchesOnlyOneIsRemoved() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete(x => x.Address.Zip == "10000", cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Delete(x => x.Address.Zip == "10000", cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
 
         var people = await customer.FindAsync(x => x.Address.Zip == "10000", cancellationToken: TestContext.Current.CancellationToken)
-                                   .Retrieve(async x => await x.ToListAsync());
-        people.Count.Should().Be(1);
+                                   .Retrieve(async x => await x.ExecuteList());
+        people.Unwrap().Count.Should().Be(1);
     }
 
     [Fact(DisplayName = "Try deleting with a specific key")]
-    public async Task TryDeletingWithSpecificKey()
-    {
+    public async Task TryDeletingWithSpecificKey() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
 
         // when
-        var result = await customer.TryDelete(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Delete(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();
         var john = await customer.GetById(JohnDoe.Id, cancel: TestContext.Current.CancellationToken);
-        john.Should().BeNull();
+        john.IsFail.Should().BeTrue();
+        john.UnwrapError().Code.Should().Be(StandardErrorCodes.NotFound);
     }
 
     [Fact(DisplayName = "Try deleting with a key and an invalid version, should have no effect")]
-    public async Task TryDeletingWithKeyAndInvalidVersionShouldHaveNoEffect()
-    {
+    public async Task TryDeletingWithKeyAndInvalidVersionShouldHaveNoEffect() {
         var mdb = MockDb.StartWithSample();
         var customer = mdb.Db.GetCollection<Customer>();
         var customerCount = await customer.CountDocumentsAsync(_ => true, cancellationToken: TestContext.Current.CancellationToken);
 
         // when
-        var result = await customer.TryDelete(JohnDoe.Id, 123u, cancel: TestContext.Current.CancellationToken);
+        var result = await customer.Delete(JohnDoe.Id, 123u, cancel: TestContext.Current.CancellationToken);
 
         // then
         result.IsSuccess.Should().BeTrue();

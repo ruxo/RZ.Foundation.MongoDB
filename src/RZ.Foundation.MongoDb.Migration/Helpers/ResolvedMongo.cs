@@ -19,7 +19,7 @@ public class StandardResolver : IResolvedMongo
         var connectionSettings = AppSettings.From(mcs) ?? AppSettings.FromEnvironment(mcs.ToString());
 
         Client = new MongoClient(mcs.ToString());
-        Database = Client.GetDatabase(connectionSettings.DatabaseName);
+        Database = Client.GetDatabase(connectionSettings.Unwrap().DatabaseName);
     }
 
     public IMongoClient Client { get; }

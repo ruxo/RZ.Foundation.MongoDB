@@ -62,7 +62,7 @@ public readonly record struct MongoConnectionString(
 
     static Map<CaseInsensitiveString, string> ExtractOptionString(string options) =>
         options.Split('&')
-               .Fold(LanguageExt.Map.empty<CaseInsensitiveString, string>(),
+               .Fold(Map.empty<CaseInsensitiveString, string>(),
                      (last, current) => ExtractOption(current).Select(opt => last.Add(new(opt.Key), opt.Value)) ?? last);
 
     static (string Key, string Value)? ExtractOption(string s)

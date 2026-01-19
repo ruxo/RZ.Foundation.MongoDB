@@ -7,13 +7,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Driver" Version="3.5.2" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.6.0" />
     <PackageVersion Include="MongoDBMigrationsRZ" Version="1.4.0" />
     <!-- Core -->
-    <PackageVersion Include="MinVer" Version="6.0.0" />
-    <PackageVersion Include="RZ.Foundation" Version="8.1.0" />
+    <PackageVersion Include="MinVer" Version="7.0.0" />
+    <PackageVersion Include="RZ.Foundation" Version="8.2.0" />
     <!-- Unit Tests -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
@@ -21,7 +21,7 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="RZ.Foundation.Testing" Version="8.0.0" />
-    <PackageVersion Include="xunit.analyzers" Version="1.26.0">
+    <PackageVersion Include="xunit.analyzers" Version="1.27.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
