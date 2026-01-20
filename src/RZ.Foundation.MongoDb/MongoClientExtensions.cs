@@ -36,6 +36,19 @@ public static class MongoClientExtensions
             });
     }
 
+    extension<T, P>(IFindFluent<T, P> finder)
+    {
+        [PublicAPI]
+        public async ValueTask<Outcome<IReadOnlyList<P>>> ExecuteList(CancellationToken cancel = default) {
+            try{
+                return await finder.ToListAsync(cancellationToken: cancel);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
+    }
+
     extension<T>(IAsyncCursor<T> cursor)
     {
         public ValueTask<Outcome<TResult>> Retrieve<TResult>(Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain)
