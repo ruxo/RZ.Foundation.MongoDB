@@ -23,16 +23,16 @@ public static class MongoClientExtensions
         [Pure, PublicAPI]
         public ValueTask<Outcome<T>> Get(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
             => TryExecute(async () => {
-                using var cursor = await collection.FindAsync(predicate, cancellationToken: cancel);
-                return await cursor.MoveNextAsync(cancel) ? cursor.Current.First() : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
+                using var cursor = await collection.FindAsync(predicate, cancellationToken: cancel).ConfigureAwait(false);
+                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false) ? cursor.Current.First() : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
             });
 
         [Pure, PublicAPI]
         public ValueTask<Outcome<T>> GetById<TKey>(TKey id, CancellationToken cancel = default)
             => TryExecute(async () => {
                 var filter = Builders<T>.Filter.Eq(new StringFieldDefinition<T, TKey>("Id"), id);
-                using var cursor = await collection.FindAsync(filter, cancellationToken: cancel);
-                return await cursor.MoveNextAsync(cancel) ? cursor.Current.TryFirst().ToOutcome(new(StandardErrorCodes.NotFound)) : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
+                using var cursor = await collection.FindAsync(filter, cancellationToken: cancel).ConfigureAwait(false);
+                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false) ? cursor.Current.TryFirst().ToOutcome(new(StandardErrorCodes.NotFound)) : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
             });
     }
 
@@ -41,7 +41,7 @@ public static class MongoClientExtensions
         [PublicAPI]
         public async ValueTask<Outcome<IReadOnlyList<P>>> ExecuteList(CancellationToken cancel = default) {
             try{
-                return await finder.ToListAsync(cancellationToken: cancel);
+                return await finder.ToListAsync(cancellationToken: cancel).ConfigureAwait(false);
             }
             catch (Exception e){
                 return InterpretDatabaseError(e);
@@ -54,13 +54,13 @@ public static class MongoClientExtensions
         public ValueTask<Outcome<TResult>> Retrieve<TResult>(Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain)
             => TryExecute(async () => {
                 using var c = cursor;
-                return await chain(c);
+                return await chain(c).ConfigureAwait(false);
             });
 
         [PublicAPI]
         public async ValueTask<Outcome<List<T>>> ExecuteList(CancellationToken cancel = default) {
             try{
-                return await cursor.ToListAsync(cancel);
+                return await cursor.ToListAsync(cancel).ConfigureAwait(false);
             }
             catch (Exception e){
                 return InterpretDatabaseError(e);
@@ -70,7 +70,7 @@ public static class MongoClientExtensions
         [PublicAPI]
         public async ValueTask<Outcome<bool>> TryMoveNext(CancellationToken cancelToken = default) {
             try{
-                return await cursor.MoveNextAsync(cancelToken);
+                return await cursor.MoveNextAsync(cancelToken).ConfigureAwait(false);
             }
             catch (Exception e){
                 return InterpretDatabaseError(e);
@@ -80,7 +80,7 @@ public static class MongoClientExtensions
         [PublicAPI]
         public async IAsyncEnumerable<Outcome<T>> Enumerate([EnumeratorCancellation] CancellationToken cancelToken = default) {
             ErrorInfo? error = null;
-            while(!cancelToken.IsCancellationRequested && Success(await cursor.TryMoveNext(cancelToken), out var cont, out error) && cont)
+            while(!cancelToken.IsCancellationRequested && Success(await cursor.TryMoveNext(cancelToken).ConfigureAwait(false), out var cont, out error) && cont)
                 foreach(var item in cursor.Current)
                     yield return item;
             if (error is not null)
@@ -93,7 +93,7 @@ public static class MongoClientExtensions
         [PublicAPI]
         public async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor(CancellationToken cancelToken = default) {
             try{
-                return SuccessOutcome(await source.ToCursorAsync(cancelToken));
+                return SuccessOutcome(await source.ToCursorAsync(cancelToken).ConfigureAwait(false));
             }
             catch (Exception e){
                 return InterpretDatabaseError(e);
@@ -104,8 +104,8 @@ public static class MongoClientExtensions
     [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueTask<Outcome<TResult>> Retrieve<T, TResult>(this Task<IAsyncCursor<T>> cursor, Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain)
         => TryExecute(async () => {
-            using var c = await cursor;
-            return await chain(c);
+            using var c = await cursor.ConfigureAwait(false);
+            return await chain(c).ConfigureAwait(false);
         });
 
     #endregion
@@ -121,7 +121,7 @@ public static class MongoClientExtensions
     {
         public ValueTask<Outcome<T>> Add(T data, CancellationToken cancel = default)
             => TryExecute(async () => {
-                await collection.InsertOneAsync(data, cancellationToken: cancel);
+                await collection.InsertOneAsync(data, cancellationToken: cancel).ConfigureAwait(false);
                 return data;
             });
 
@@ -129,7 +129,7 @@ public static class MongoClientExtensions
 
         async ValueTask<Outcome<T>> PureUpdate(T data, FilterDefinition<T> predicate, bool upsert, CancellationToken cancel) {
             var option = upsert ? ReplaceUpsertOption : null;
-            var result = await collection.ReplaceOneAsync(predicate, data, option, cancel);
+            var result = await collection.ReplaceOneAsync(predicate, data, option, cancel).ConfigureAwait(false);
             return InterpretUpdateResult(data, result);
         }
 
@@ -164,20 +164,20 @@ public static class MongoClientExtensions
 
         public ValueTask<Outcome<Unit>> DeleteAll(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
             => TryExecute(async () => {
-                await collection.DeleteManyAsync(predicate, cancel);
+                await collection.DeleteManyAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
             });
 
         public ValueTask<Outcome<Unit>> Delete(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
             => TryExecute(async () => {
-                await collection.DeleteOneAsync(predicate, cancel);
+                await collection.DeleteOneAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
             });
 
         public ValueTask<Outcome<Unit>> Delete<TKey>(TKey key, VersionType? current = null, CancellationToken cancel = default)
             => TryExecute(async () => {
                 var filter = current is null ? Build<T>.Predicate(key) : Build<T>.Predicate(key, current.Value);
-                await collection.DeleteOneAsync(filter, cancel);
+                await collection.DeleteOneAsync(filter, cancel).ConfigureAwait(false);
                 return unit;
             });
 
