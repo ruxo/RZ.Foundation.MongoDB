@@ -14,15 +14,27 @@ namespace RZ.Foundation.MongoDb;
 [PublicAPI]
 public static class MongoClientExtensions
 {
-    /// <summary>
-    /// Safe retrieving the database cursor
-    /// </summary>
-    public static async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor<T>(this IQueryable<T> query) {
-        try{
-            return SuccessOutcome(await query.ToCursorAsync().ConfigureAwait(false));
+    extension<T>(IQueryable<T> query)
+    {
+        /// <summary>
+        /// Safe retrieving the database cursor
+        /// </summary>
+        public async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor() {
+            try{
+                return SuccessOutcome(await query.ToCursorAsync().ConfigureAwait(false));
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
         }
-        catch (Exception e){
-            return InterpretDatabaseError(e);
+
+        public async ValueTask<Outcome<List<T>>> ExecuteList() {
+            try{
+                return await query.ToListAsync().ConfigureAwait(false);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
         }
     }
 
