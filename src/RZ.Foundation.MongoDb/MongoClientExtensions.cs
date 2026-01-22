@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using RZ.Foundation.Types;
 using static RZ.Foundation.MongoDb.MongoHelper;
 using PureAttribute = System.Diagnostics.Contracts.PureAttribute;
@@ -13,6 +14,18 @@ namespace RZ.Foundation.MongoDb;
 [PublicAPI]
 public static class MongoClientExtensions
 {
+    /// <summary>
+    /// Safe retrieving the database cursor
+    /// </summary>
+    public static async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor<T>(this IQueryable<T> query) {
+        try{
+            return SuccessOutcome(await query.ToCursorAsync().ConfigureAwait(false));
+        }
+        catch (Exception e){
+            return InterpretDatabaseError(e);
+        }
+    }
+
     #region Retrieval
 
     extension<T>(IMongoCollection<T> collection)
@@ -94,6 +107,16 @@ public static class MongoClientExtensions
         public async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor(CancellationToken cancelToken = default) {
             try{
                 return SuccessOutcome(await source.ToCursorAsync(cancelToken).ConfigureAwait(false));
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
+
+        [PublicAPI]
+        public async ValueTask<Outcome<List<T>>> ExecuteList(CancellationToken cancel = default) {
+            try{
+                return await source.ToListAsync(cancel).ConfigureAwait(false);
             }
             catch (Exception e){
                 return InterpretDatabaseError(e);
