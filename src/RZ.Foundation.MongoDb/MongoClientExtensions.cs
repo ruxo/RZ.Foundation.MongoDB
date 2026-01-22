@@ -19,6 +19,7 @@ public static class MongoClientExtensions
         /// <summary>
         /// Safe retrieving the database cursor
         /// </summary>
+        [PublicAPI]
         public async ValueTask<Outcome<IAsyncCursor<T>>> GetCursor() {
             try{
                 return SuccessOutcome(await query.ToCursorAsync().ConfigureAwait(false));
@@ -28,6 +29,7 @@ public static class MongoClientExtensions
             }
         }
 
+        [PublicAPI]
         public async ValueTask<Outcome<List<T>>> ExecuteList() {
             try{
                 return await query.ToListAsync().ConfigureAwait(false);
@@ -64,7 +66,7 @@ public static class MongoClientExtensions
     extension<T, P>(IFindFluent<T, P> finder)
     {
         [PublicAPI]
-        public async ValueTask<Outcome<IReadOnlyList<P>>> ExecuteList(CancellationToken cancel = default) {
+        public async ValueTask<Outcome<List<P>>> ExecuteList(CancellationToken cancel = default) {
             try{
                 return await finder.ToListAsync(cancellationToken: cancel).ConfigureAwait(false);
             }
