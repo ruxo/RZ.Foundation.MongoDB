@@ -48,19 +48,31 @@ public static class MongoClientExtensions
         /// Get the first element that satisfies the predicate.
         /// </summary>
         [Pure, PublicAPI]
-        public ValueTask<Outcome<T>> Get(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<T>> Get(Expression<Func<T, bool>> predicate, CancellationToken cancel = default) {
+            try{
                 using var cursor = await collection.FindAsync(predicate, cancellationToken: cancel).ConfigureAwait(false);
-                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false) ? cursor.Current.First() : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
-            });
+                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false)
+                           ? cursor.Current.TryFirst().ToOutcome(ErrorInfo.NotFound)
+                           : FailedOutcome<T>(ErrorInfo.NotFound);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
         [Pure, PublicAPI]
-        public ValueTask<Outcome<T>> GetById<TKey>(TKey id, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<T>> GetById<TKey>(TKey id, CancellationToken cancel = default) {
+            try{
                 var filter = Builders<T>.Filter.Eq(new StringFieldDefinition<T, TKey>("Id"), id);
                 using var cursor = await collection.FindAsync(filter, cancellationToken: cancel).ConfigureAwait(false);
-                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false) ? cursor.Current.TryFirst().ToOutcome(new(StandardErrorCodes.NotFound)) : FailedOutcome<T>(new(StandardErrorCodes.NotFound));
-            });
+                return await cursor.MoveNextAsync(cancel).ConfigureAwait(false)
+                           ? cursor.Current.TryFirst().ToOutcome(ErrorInfo.NotFound)
+                           : FailedOutcome<T>(ErrorInfo.NotFound);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
     }
 
     extension<T, P>(IFindFluent<T, P> finder)
@@ -78,11 +90,15 @@ public static class MongoClientExtensions
 
     extension<T>(IAsyncCursor<T> cursor)
     {
-        public ValueTask<Outcome<TResult>> Retrieve<TResult>(Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<TResult>> Retrieve<TResult>(Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain) {
+            try{
                 using var c = cursor;
                 return await chain(c).ConfigureAwait(false);
-            });
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
         [PublicAPI]
         public async ValueTask<Outcome<List<T>>> ExecuteList(CancellationToken cancel = default) {
@@ -139,11 +155,15 @@ public static class MongoClientExtensions
     }
 
     [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueTask<Outcome<TResult>> Retrieve<T, TResult>(this Task<IAsyncCursor<T>> cursor, Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain)
-        => TryExecute(async () => {
+    public static async ValueTask<Outcome<TResult>> Retrieve<T, TResult>(this Task<IAsyncCursor<T>> cursor, Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain) {
+        try {
             using var c = await cursor.ConfigureAwait(false);
             return await chain(c).ConfigureAwait(false);
-        });
+        }
+        catch (Exception e){
+            return InterpretDatabaseError(e);
+        }
+    }
 
     #endregion
 
@@ -156,11 +176,15 @@ public static class MongoClientExtensions
 
     extension<T>(IMongoCollection<T> collection)
     {
-        public ValueTask<Outcome<T>> Add(T data, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<T>> Add(T data, CancellationToken cancel = default) {
+            try{
                 await collection.InsertOneAsync(data, cancellationToken: cancel).ConfigureAwait(false);
                 return data;
-            });
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
         #region Update
 
@@ -174,13 +198,13 @@ public static class MongoClientExtensions
                                             Expression<Func<T, bool>> predicate,
                                             bool upsert = false,
                                             CancellationToken cancel = default)
-            => TryExecute(() => collection.PureUpdate(data, predicate, upsert, cancel));
+            => collection.PureUpdate(data, predicate, upsert, cancel);
 
         public ValueTask<Outcome<T>> Update<TKey>(TKey key, T data, VersionType? current = null,
                                                   bool upsert = false, CancellationToken cancel = default)
-            => TryExecute(() => collection.PureUpdate(data,
-                                                      current is null ? Build<T>.Predicate(key) : Build<T>.Predicate(key, current.Value),
-                                                      upsert, cancel));
+            => collection.PureUpdate(data,
+                                     current is null ? Build<T>.Predicate(key) : Build<T>.Predicate(key, current.Value),
+                                     upsert, cancel);
 
         #endregion
 
@@ -199,24 +223,36 @@ public static class MongoClientExtensions
 
         #region Deletion
 
-        public ValueTask<Outcome<Unit>> DeleteAll(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<Unit>> DeleteAll(Expression<Func<T, bool>> predicate, CancellationToken cancel = default) {
+            try {
                 await collection.DeleteManyAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
-            });
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
-        public ValueTask<Outcome<Unit>> Delete(Expression<Func<T, bool>> predicate, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<Unit>> Delete(Expression<Func<T, bool>> predicate, CancellationToken cancel = default) {
+            try {
                 await collection.DeleteOneAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
-            });
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
-        public ValueTask<Outcome<Unit>> Delete<TKey>(TKey key, VersionType? current = null, CancellationToken cancel = default)
-            => TryExecute(async () => {
+        public async ValueTask<Outcome<Unit>> Delete<TKey>(TKey key, VersionType? current = null, CancellationToken cancel = default) {
+            try {
                 var filter = current is null ? Build<T>.Predicate(key) : Build<T>.Predicate(key, current.Value);
                 await collection.DeleteOneAsync(filter, cancel).ConfigureAwait(false);
                 return unit;
-            });
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
         #endregion
     }
@@ -224,11 +260,15 @@ public static class MongoClientExtensions
     extension<T, TKey>(IMongoCollection<T> collection) where T : IHaveKey<TKey>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueTask<Outcome<T>> Update(T data, bool upsert = false, TimeProvider? clock = null, CancellationToken cancel = default)
-            => TryExecute(() => {
+        public async ValueTask<Outcome<T>> Update(T data, bool upsert = false, TimeProvider? clock = null, CancellationToken cancel = default) {
+            try {
                 var (final, predicate) = GetUpdateCondition<T, TKey>(data, clock);
-                return collection.PureUpdate(final, predicate, upsert, cancel);
-            });
+                return await collection.PureUpdate(final, predicate, upsert, cancel);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ValueTask<Outcome<T>> Upsert(T data, TimeProvider? clock = null, CancellationToken cancel = default)

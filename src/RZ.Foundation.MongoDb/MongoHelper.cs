@@ -41,15 +41,6 @@ public static class MongoHelper
     public static ErrorInfo InterpretDatabaseError(Exception e)
         => TryInterpretDatabaseError(e) ?? ErrorFrom.Exception(e);
 
-    public static async ValueTask<Outcome<T>> TryExecute<T>(Func<ValueTask<Outcome<T>>> f) {
-        try{
-            return await f();
-        }
-        catch (MongoException e){
-            return InterpretDatabaseError(e);
-        }
-    }
-
     public static async ValueTask<Outcome<T>> TryExecute<T>(Func<ValueTask<T>> f) {
         try{
             return await f();
