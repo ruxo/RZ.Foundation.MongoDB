@@ -234,7 +234,7 @@ public class Update
 
         var result = await customer.Update(NewKid, x => x.Address.Country == "TH", cancel: TestContext.Current.CancellationToken);
 
-        result.IfFail(out var error, out _).Should().BeTrue();
+        result.IfFail(out var error).Should().BeTrue();
         error.Code.Should().Be(StandardErrorCodes.DatabaseTransactionError, "someone's ID was overwritten");
     }
 }

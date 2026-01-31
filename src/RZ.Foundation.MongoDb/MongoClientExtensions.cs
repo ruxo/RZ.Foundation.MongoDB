@@ -123,8 +123,8 @@ public static class MongoClientExtensions
         [PublicAPI]
         public async IAsyncEnumerable<Outcome<T>> Enumerate([EnumeratorCancellation] CancellationToken cancelToken = default) {
             ErrorInfo? error = null;
-            while(!cancelToken.IsCancellationRequested && Success(await cursor.TryMoveNext(cancelToken).ConfigureAwait(false), out var cont, out error) && cont)
-                foreach(var item in cursor.Current)
+            while (!cancelToken.IsCancellationRequested && Success(await cursor.TryMoveNext(cancelToken).ConfigureAwait(false), out var cont, out error) && cont)
+                foreach (var item in cursor.Current)
                     yield return item;
             if (error is not null)
                 yield return error;
@@ -156,7 +156,7 @@ public static class MongoClientExtensions
 
     [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static async ValueTask<Outcome<TResult>> Retrieve<T, TResult>(this Task<IAsyncCursor<T>> cursor, Func<IAsyncCursor<T>, ValueTask<Outcome<TResult>>> chain) {
-        try {
+        try{
             using var c = await cursor.ConfigureAwait(false);
             return await chain(c).ConfigureAwait(false);
         }
@@ -190,10 +190,16 @@ public static class MongoClientExtensions
 
         async ValueTask<Outcome<T>> PureUpdate(T data, FilterDefinition<T> predicate, bool upsert, CancellationToken cancel) {
             var option = upsert ? ReplaceUpsertOption : null;
-            var result = await collection.ReplaceOneAsync(predicate, data, option, cancel).ConfigureAwait(false);
-            return InterpretUpdateResult(data, result);
+            try{
+                var result = await collection.ReplaceOneAsync(predicate, data, option, cancel).ConfigureAwait(false);
+                return InterpretUpdateResult(data, result);
+            }
+            catch (Exception e){
+                return InterpretDatabaseError(e);
+            }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ValueTask<Outcome<T>> Update(T data,
                                             Expression<Func<T, bool>> predicate,
                                             bool upsert = false,
@@ -224,7 +230,7 @@ public static class MongoClientExtensions
         #region Deletion
 
         public async ValueTask<Outcome<Unit>> DeleteAll(Expression<Func<T, bool>> predicate, CancellationToken cancel = default) {
-            try {
+            try{
                 await collection.DeleteManyAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
             }
@@ -234,7 +240,7 @@ public static class MongoClientExtensions
         }
 
         public async ValueTask<Outcome<Unit>> Delete(Expression<Func<T, bool>> predicate, CancellationToken cancel = default) {
-            try {
+            try{
                 await collection.DeleteOneAsync(predicate, cancel).ConfigureAwait(false);
                 return unit;
             }
@@ -244,7 +250,7 @@ public static class MongoClientExtensions
         }
 
         public async ValueTask<Outcome<Unit>> Delete<TKey>(TKey key, VersionType? current = null, CancellationToken cancel = default) {
-            try {
+            try{
                 var filter = current is null ? Build<T>.Predicate(key) : Build<T>.Predicate(key, current.Value);
                 await collection.DeleteOneAsync(filter, cancel).ConfigureAwait(false);
                 return unit;
@@ -261,7 +267,7 @@ public static class MongoClientExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async ValueTask<Outcome<T>> Update(T data, bool upsert = false, TimeProvider? clock = null, CancellationToken cancel = default) {
-            try {
+            try{
                 var (final, predicate) = GetUpdateCondition<T, TKey>(data, clock);
                 return await collection.PureUpdate(final, predicate, upsert, cancel);
             }
