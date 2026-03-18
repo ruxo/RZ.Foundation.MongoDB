@@ -22,8 +22,12 @@ public static class MongoHelper
     [ExcludeFromCodeCoverage]
     public static void SetupMongoStandardMappings(bool useLegacyGuid = false) {
         BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.DateTime));
+
         if (!useLegacyGuid)
             BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+        // FUTURE: Remove once it's stable
+        // BsonSerializer.RegisterSerializer(new Serializers.JsonNodeSerializer());
 
         var pack = new ConventionPack{ new EnumRepresentationConvention(BsonType.String) };
         ConventionRegistry.Register("EnumString", pack, _ => true);
@@ -40,13 +44,4 @@ public static class MongoHelper
     [Pure]
     public static ErrorInfo InterpretDatabaseError(Exception e)
         => TryInterpretDatabaseError(e) ?? ErrorFrom.Exception(e);
-
-    public static async ValueTask<Outcome<T>> TryExecute<T>(Func<ValueTask<T>> f) {
-        try{
-            return await f();
-        }
-        catch (MongoException e){
-            return InterpretDatabaseError(e);
-        }
-    }
 }

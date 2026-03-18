@@ -7,7 +7,10 @@
   <ItemGroup>
       <PackageReference Include="MongoSandbox.Core" />
       <PackageReference Include="MongoSandbox8.runtime.win-x64" />
-    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="RZ.Foundation.Testing" />
     <PackageReference Include="xunit.analyzers">
