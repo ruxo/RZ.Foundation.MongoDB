@@ -49,7 +49,7 @@ public class Add
 
         // then
         await Assert.That(result.IfFail(out var error, out _)).IsTrue();
-        await Assert.That(error.Code).IsEqualTo(StandardErrorCodes.Duplication);
+        await Assert.That(error!.Code).IsEqualTo(StandardErrorCodes.Duplication);
     }
 
     [Test]
@@ -187,7 +187,7 @@ public class Update
         var result = await customer.Update(JaneDoe.Id, updatedJane, 123u, cancel: cancel);
 
         await Assert.That(result.IfFail(out var error, out _)).IsTrue();
-        await Assert.That(error.Code).IsEqualTo(StandardErrorCodes.RaceCondition);
+        await Assert.That(error!.Code).IsEqualTo(StandardErrorCodes.RaceCondition);
     }
 
     [Test]
@@ -247,7 +247,7 @@ public class Update
         var result = await customer.Update(NewKid, x => x.Address.Country == "TH", cancel: cancel);
 
         await Assert.That(result.IfFail(out var error)).IsTrue();
-        await Assert.That(error.Code).IsEqualTo(StandardErrorCodes.DatabaseTransactionError).Because("someone's ID was overwritten");
+        await Assert.That(error!.Code).IsEqualTo(StandardErrorCodes.DatabaseTransactionError).Because("someone's ID was overwritten");
     }
 }
 
@@ -335,7 +335,7 @@ public class Upsert
 
         // then
         await Assert.That(result.IfFail(out var error, out _)).IsTrue();
-        await Assert.That(error.Code).IsEqualTo(StandardErrorCodes.Duplication);
+        await Assert.That(error!.Code).IsEqualTo(StandardErrorCodes.Duplication);
     }
 
     [Test]
@@ -365,7 +365,7 @@ public class Upsert
 
         // then
         await Assert.That(result.IfFail(out var error, out _)).IsTrue();
-        await Assert.That(error.Code).IsEqualTo(StandardErrorCodes.Duplication);
+        await Assert.That(error!.Code).IsEqualTo(StandardErrorCodes.Duplication);
     }
 }
 
