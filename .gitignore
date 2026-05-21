@@ -1,5 +1,6 @@
 obj/
 bin/
 .idea/
+.claude/
 *.sln.DotSettings.user
 appsettings.Development.json

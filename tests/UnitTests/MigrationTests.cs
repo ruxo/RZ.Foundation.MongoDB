@@ -1,13 +1,16 @@
-﻿using System.Reflection;
+﻿using JetBrains.Annotations;
 using MongoDB.Driver;
 using MongoDBMigrations;
+using Assembly = System.Reflection.Assembly;
 using Version = MongoDBMigrations.Version;
 
 namespace UnitTests;
 
+[UsedImplicitly(ImplicitUseTargetFlags.Members)]
 public class MigrationTests
 {
-    [Fact(DisplayName = "Initialize migration")]
+    [Test]
+    [DisplayName("Initialize migration")]
     public void InitializeMigration() {
         var mdb = MockDb.StartDb();
 
