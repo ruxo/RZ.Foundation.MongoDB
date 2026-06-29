@@ -7,7 +7,6 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src\RZ.Foundation.MongoDb.Migration\RZ.Foundation.MongoDb.Migration.csproj" />
     <Project Path="src\RZ.Foundation.MongoDb\RZ.Foundation.MongoDb.csproj" />
     <File Path="src\CommonGlobalUsings.cs" />
     <File Path="src\Directory.Build.props" />

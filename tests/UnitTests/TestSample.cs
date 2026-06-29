@@ -1,7 +1,5 @@
-﻿using JetBrains.Annotations;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
 using RZ.Foundation.MongoDb;
-using RZ.Foundation.MongoDb.Migration;
 
 namespace UnitTests;
 
@@ -34,11 +32,5 @@ public static class TestSample
     {
         collection.InsertMany([ JohnDoe, JaneDoe, HelloWorld ]);
         return collection;
-    }
-
-    public static IMongoDatabase ImportSamples(this IMongoDatabase db)
-    {
-        db.Collection<Customer>().ImportSamples();
-        return db;
     }
 }

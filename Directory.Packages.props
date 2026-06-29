@@ -7,15 +7,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Driver" Version="3.8.1" />
-    <PackageVersion Include="MongoDBMigrationsRZ" Version="1.5.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
     <!-- Core -->
     <PackageVersion Include="MinVer" Version="7.0.0" />
-    <PackageVersion Include="RZ.Foundation" Version="8.2.15" />
+    <PackageVersion Include="RZ.Foundation" Version="8.3.0" />
     <!-- Unit Tests -->
-    <PackageVersion Include="TUnit" Version="1.45.22" />
+    <PackageVersion Include="TUnit" Version="1.57.0" />
     <PackageVersion Include="MongoSandbox.Core" Version="2.0.0" />
     <PackageVersion Include="MongoSandbox8.runtime.win-x64" Version="2.0.0" />
   </ItemGroup>
