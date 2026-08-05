@@ -8,12 +8,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.10.0" />
     <!-- Core -->
     <PackageVersion Include="MinVer" Version="7.0.0" />
-    <PackageVersion Include="RZ.Foundation" Version="8.3.0" />
+    <PackageVersion Include="RZ.Foundation" Version="8.4.0" />
     <!-- Unit Tests -->
-    <PackageVersion Include="TUnit" Version="1.57.0" />
+    <PackageVersion Include="TUnit" Version="1.63.0" />
     <PackageVersion Include="MongoSandbox.Core" Version="2.0.0" />
     <PackageVersion Include="MongoSandbox8.runtime.win-x64" Version="2.0.0" />
   </ItemGroup>

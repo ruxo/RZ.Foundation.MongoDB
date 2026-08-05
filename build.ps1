@@ -15,6 +15,5 @@ function build {
 Push-Location ./src
 
 build .\RZ.Foundation.MongoDb
-build .\RZ.Foundation.MongoDb.Migration
 
 Pop-Location
