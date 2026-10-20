@@ -33,13 +33,21 @@ public static class MongoHelper
         ConventionRegistry.Register("EnumString", pack, _ => true);
     }
 
+    // Mongo server error code WriteConflict: another write changed the document first
+    const int WRITE_CONFLICT = 112;
+
     [Pure]
     public static ErrorInfo? TryInterpretDatabaseError(Exception e)
-        => e is MongoWriteException mongoException && mongoException.WriteError.Category == ServerErrorCategory.DuplicateKey
-               ? new ErrorInfo(StandardErrorCodes.Duplication, "Either data identity, name, or both are already existed", e.ToString())
-               : e is MongoException
-                   ? new ErrorInfo(StandardErrorCodes.DatabaseTransactionError, e.Message, e.ToString())
-                   : null;
+        => e switch {
+            MongoWriteException { WriteError.Category: ServerErrorCategory.DuplicateKey }
+                => new ErrorInfo(StandardErrorCodes.Duplication, "Either data identity, name, or both are already existed", e.ToString()),
+            // a conflicting write inside a transaction comes back as a command error, not as a write error
+            MongoCommandException { Code: WRITE_CONFLICT } or MongoWriteException { WriteError.Code: WRITE_CONFLICT }
+                => ErrorInfo.New(StandardErrorCodes.RaceCondition, "Data has changed externally", e.ToString()),
+            MongoException
+                => new ErrorInfo(StandardErrorCodes.DatabaseTransactionError, e.Message, e.ToString()),
+            _ => null
+        };
 
     [Pure]
     public static ErrorInfo InterpretDatabaseError(Exception e)
